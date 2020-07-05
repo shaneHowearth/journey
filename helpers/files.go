@@ -1,3 +1,4 @@
+// Package helpers -
 package helpers
 
 import (
@@ -5,10 +6,12 @@ import (
 	"path/filepath"
 )
 
+// GetFilenameWithoutExtension -
 func GetFilenameWithoutExtension(path string) string {
 	return filepath.Base(path)[0 : len(filepath.Base(path))-len(filepath.Ext(path))]
 }
 
+// IsDirectory -
 func IsDirectory(path string) bool {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -17,11 +20,10 @@ func IsDirectory(path string) bool {
 	return fileInfo.IsDir()
 }
 
+// FileExists -
 func FileExists(path string) bool {
 	_, err := os.Stat(path)
-	if err != nil {
-		// We could check with os.IsNotExist(err) here, but since os.Stat threw an error, we likely can't use the file anyway.
-		return false
-	}
-	return true
+
+	// We could check with os.IsNotExist(err) here, but since os.Stat threw an error, we likely can't use the file anyway.
+	return err == nil
 }

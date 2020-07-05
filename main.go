@@ -1,3 +1,4 @@
+// Package main -
 package main
 
 import (
@@ -20,8 +21,7 @@ import (
 )
 
 func httpsRedirect(w http.ResponseWriter, r *http.Request, _ map[string]string) {
-	http.Redirect(w, r, configuration.Config.HttpsUrl+r.RequestURI, http.StatusMovedPermanently)
-	return
+	http.Redirect(w, r, configuration.Config.HTTPSURL+r.RequestURI, http.StatusMovedPermanently)
 }
 
 func main() {
@@ -33,7 +33,8 @@ func main() {
 
 	// Write log to file if the log flag was provided
 	if flags.Log != "" {
-		logFile, err := os.OpenFile(flags.Log, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		var logFile *os.File
+		logFile, err = os.OpenFile(flags.Log, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatal("Error: Couldn't open log file: " + err.Error())
 		}
@@ -69,19 +70,19 @@ func main() {
 	}
 
 	// HTTP(S) Server
-	httpPort := configuration.Config.HttpHostAndPort
-	httpsPort := configuration.Config.HttpsHostAndPort
+	httpPort := configuration.Config.HTTPHostAndPort
+	httpsPort := configuration.Config.HTTPSHostAndPort
 	// Check if HTTP/HTTPS flags were provided
-	if flags.HttpPort != "" {
+	if flags.HTTPPort != "" {
 		components := strings.SplitAfterN(httpPort, ":", 2)
-		httpPort = components[0] + flags.HttpPort
+		httpPort = components[0] + flags.HTTPPort
 	}
-	if flags.HttpsPort != "" {
+	if flags.HTTPSPort != "" {
 		components := strings.SplitAfterN(httpsPort, ":", 2)
-		httpsPort = components[0] + flags.HttpsPort
+		httpsPort = components[0] + flags.HTTPSPort
 	}
 	// Determine the kind of https support (as set in the config.json)
-	switch configuration.Config.HttpsUsage {
+	switch configuration.Config.HTTPSUsage {
 	case "AdminOnly":
 		httpRouter := httptreemux.New()
 		httpsRouter := httptreemux.New()

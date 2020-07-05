@@ -1,3 +1,4 @@
+// Package database -
 package database
 
 import (
@@ -8,8 +9,8 @@ import (
 	"github.com/kabukky/journey/filenames"
 	"github.com/kabukky/journey/helpers"
 	"github.com/kabukky/journey/structure"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/satori/go.uuid"
+	_ "github.com/mattn/go-sqlite3" // nolint: golint
+	uuid "github.com/satori/go.uuid"
 )
 
 // Handler for read access
@@ -126,6 +127,7 @@ var stmtInitialization = `CREATE TABLE IF NOT EXISTS
 	);
 	`
 
+// Initialize -
 func Initialize() error {
 	// If journey.db does not exist, look for a Ghost database to convert
 	if !helpers.FileExists(filenames.DatabaseFilename) {

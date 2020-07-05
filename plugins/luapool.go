@@ -1,14 +1,17 @@
 // +build !noplugins
 
+// Package plugins -
 package plugins
 
 import (
-	"github.com/kabukky/journey/structure"
-	"github.com/yuin/gopher-lua"
+	"log"
 	"sync"
+
+	"github.com/kabukky/journey/structure"
+	lua "github.com/yuin/gopher-lua"
 )
 
-// Global LState pool
+// LuaPool - Global LState pool
 var LuaPool *lStatePool
 
 type lStatePool struct {
@@ -21,27 +24,31 @@ func (pl *lStatePool) Get(helper *structure.Helper, values *structure.RequestDat
 	pl.m.Lock()
 	defer pl.m.Unlock()
 	n := len(pl.saved)
+	var x map[string]*lua.LState
 	if n == 0 {
-		x := pl.New()
+		x = pl.New()
 		// Since these are new lua states, do the lua file.
 		for key, value := range x {
-			setUpVm(value, helper, values, LuaPool.files[key])
-			value.DoFile(LuaPool.files[key])
+			setUpVM(value, helper, values, LuaPool.files[key])
+			err := value.DoFile(LuaPool.files[key])
+			if err != nil {
+				log.Printf("value.DoFile generated error %v", err)
+			}
 		}
-		return x
+	} else {
+		x = pl.saved[n-1]
+		// Set the new values for this request in every lua state
+		for key, value := range x {
+			setUpVM(value, helper, values, LuaPool.files[key])
+		}
+		pl.saved = pl.saved[0 : n-1]
 	}
-	x := pl.saved[n-1]
-	// Set the new values for this request in every lua state
-	for key, value := range x {
-		setUpVm(value, helper, values, LuaPool.files[key])
-	}
-	pl.saved = pl.saved[0 : n-1]
 	return x
 }
 
 func (pl *lStatePool) New() map[string]*lua.LState {
-	stateMap := make(map[string]*lua.LState, 0)
-	for key, _ := range LuaPool.files {
+	stateMap := make(map[string]*lua.LState)
+	for key := range LuaPool.files {
 		L := lua.NewState()
 		stateMap[key] = L
 	}

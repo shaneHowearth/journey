@@ -1,3 +1,4 @@
+// Package configuration -
 package configuration
 
 import (
@@ -11,16 +12,17 @@ import (
 	"github.com/kabukky/journey/filenames"
 )
 
-// Configuration: settings that are neccesary for server configuration
+// Configuration - settings that are neccesary for server configuration
 type Configuration struct {
-	HttpHostAndPort  string
-	HttpsHostAndPort string
-	HttpsUsage       string
-	Url              string
-	HttpsUrl         string
+	HTTPHostAndPort  string
+	HTTPSHostAndPort string
+	HTTPSUsage       string
+	URL              string
+	HTTPSURL         string
 	UseLetsEncrypt   bool
 }
 
+// NewConfiguration -
 func NewConfiguration() *Configuration {
 	var config Configuration
 	err := config.load()
@@ -40,7 +42,7 @@ func NewConfiguration() *Configuration {
 	return &config
 }
 
-// Global config - thread safe and accessible from all packages
+// Config - Global config - thread safe and accessible from all packages
 var Config = NewConfiguration()
 
 func (c *Configuration) save() error {
@@ -63,30 +65,30 @@ func (c *Configuration) load() error {
 	}
 	// Make sure the url is in the right format
 	// Make sure there is no trailing slash at the end of the url
-	if strings.HasSuffix(c.Url, "/") {
-		c.Url = c.Url[0 : len(c.Url)-1]
+	if strings.HasSuffix(c.URL, "/") {
+		c.URL = c.URL[0 : len(c.URL)-1]
 		configWasChanged = true
 	}
-	if !strings.HasPrefix(c.Url, "http://") && !strings.HasPrefix(c.Url, "https://") {
-		c.Url = "http://" + c.Url
+	if !strings.HasPrefix(c.URL, "http://") && !strings.HasPrefix(c.URL, "https://") {
+		c.URL = "http://" + c.URL
 		configWasChanged = true
 	}
 	// Make sure the https url is in the right format
 	// Make sure there is no trailing slash at the end of the https url
-	if strings.HasSuffix(c.HttpsUrl, "/") {
-		c.HttpsUrl = c.HttpsUrl[0 : len(c.HttpsUrl)-1]
+	if strings.HasSuffix(c.HTTPSURL, "/") {
+		c.HTTPSURL = c.HTTPSURL[0 : len(c.HTTPSURL)-1]
 		configWasChanged = true
 	}
-	if strings.HasPrefix(c.HttpsUrl, "http://") {
-		c.HttpsUrl = strings.Replace(c.HttpsUrl, "http://", "https://", 1)
+	if strings.HasPrefix(c.HTTPSURL, "http://") {
+		c.HTTPSURL = strings.Replace(c.HTTPSURL, "http://", "https://", 1)
 		configWasChanged = true
-	} else if !strings.HasPrefix(c.HttpsUrl, "https://") {
-		c.HttpsUrl = "https://" + c.HttpsUrl
+	} else if !strings.HasPrefix(c.HTTPSURL, "https://") {
+		c.HTTPSURL = "https://" + c.HTTPSURL
 		configWasChanged = true
 	}
 	// Make sure there is no trailing slash at the end of the url
-	if strings.HasSuffix(c.HttpsUrl, "/") {
-		c.HttpsUrl = c.HttpsUrl[0 : len(c.HttpsUrl)-1]
+	if strings.HasSuffix(c.HTTPSURL, "/") {
+		c.HTTPSURL = c.HTTPSURL[0 : len(c.HTTPSURL)-1]
 		configWasChanged = true
 	}
 	// Check if all fields are filled out
@@ -94,7 +96,7 @@ func (c *Configuration) load() error {
 	for i := 0; i < cReflected.NumField(); i++ {
 		if cReflected.Field(i).Interface() == "" {
 			log.Println("Error: " + filenames.ConfigFilename + " is corrupted. Did you fill out all of the fields?")
-			return errors.New("Error: Configuration corrupted.")
+			return errors.New("configuration corrupted")
 		}
 	}
 	// Save the changed config
@@ -109,7 +111,7 @@ func (c *Configuration) load() error {
 
 func (c *Configuration) create() error {
 	// TODO: Change default port
-	c = &Configuration{HttpHostAndPort: ":8084", HttpsHostAndPort: ":8085", HttpsUsage: "None", Url: "127.0.0.1:8084", HttpsUrl: "127.0.0.1:8085"}
+	c = &Configuration{HTTPHostAndPort: ":8084", HTTPSHostAndPort: ":8085", HTTPSUsage: "None", URL: "127.0.0.1:8084", HTTPSURL: "127.0.0.1:8085"}
 	err := c.save()
 	if err != nil {
 		log.Println("Error: couldn't create " + filenames.ConfigFilename)

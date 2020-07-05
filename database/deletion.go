@@ -1,31 +1,48 @@
+// Package database -
 package database
 
-const stmtDeletePostTagsByPostId = "DELETE FROM posts_tags WHERE post_id = ?"
-const stmtDeletePostById = "DELETE FROM posts WHERE id = ?"
+import "fmt"
 
-func DeletePostTagsForPostId(post_id int64) error {
+const stmtDeletePostTagsByPostID = "DELETE FROM posts_tags WHERE post_id = ?"
+const stmtDeletePostByID = "DELETE FROM posts WHERE id = ?"
+
+// DeletePostTagsForPostID -
+func DeletePostTagsForPostID(postID int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst dealing with %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtDeletePostTagsByPostId, post_id)
+	_, err = writeDB.Exec(stmtDeletePostTagsByPostID, postID)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst dealing with %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()
 }
 
-func DeletePostById(id int64) error {
+// DeletePostByID -
+func DeletePostByID(ID int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst dealing with %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtDeletePostById, id)
+	_, err = writeDB.Exec(stmtDeletePostByID, ID)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst dealing with %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()

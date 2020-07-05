@@ -1,3 +1,4 @@
+// Package conversion -
 package conversion
 
 import (
@@ -25,7 +26,8 @@ const (
 		blackfriday.EXTENSION_FOOTNOTES
 )
 
-func GenerateHtmlFromMarkdown(input []byte) []byte {
+// GenerateHTMLFromMarkdown -
+func GenerateHTMLFromMarkdown(input []byte) []byte {
 	renderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
 	return blackfriday.Markdown(input, renderer, extensions)
 }

@@ -1,3 +1,4 @@
+// Package feeds -
 package feeds
 
 // rss support
@@ -11,15 +12,16 @@ import (
 )
 
 // private wrapper around the RssFeed which gives us the <rss>..</rss> xml
-type rssFeedXml struct {
+type rssFeedXML struct {
 	XMLName    xml.Name `xml:"rss"`
 	Version    string   `xml:"version,attr"`
-	XmlnsMedia string   `xml:"xmlns:media,attr"`
-	XmlnsDc    string   `xml:"xmlns:dc,attr"`
-	XmlnsAtom  string   `xml:"xmlns:atom,attr"`
+	XMLnsMedia string   `xml:"xmlns:media,attr"`
+	XMLnsDc    string   `xml:"xmlns:dc,attr"`
+	XMLnsAtom  string   `xml:"xmlns:atom,attr"`
 	Channel    *RssFeed
 }
 
+// RssAtomLink -
 type RssAtomLink struct {
 	XMLName xml.Name `xml:"atom:link"`
 	Href    string   `xml:"href,attr"`
@@ -27,29 +29,33 @@ type RssAtomLink struct {
 	Type    string   `xml:"type,attr"`
 }
 
-type RssGuid struct {
+// RssGUID -
+type RssGUID struct {
 	XMLName     xml.Name `xml:"guid"`
 	IsPermaLink bool     `xml:"isPermaLink,attr"`
 	Value       string   `xml:",innerxml"`
 }
 
+// RssImage -
 type RssImage struct {
 	XMLName xml.Name `xml:"image"`
-	Url     string   `xml:"url"`
+	URL     string   `xml:"url"`
 	Title   string   `xml:"title"`
 	Link    string   `xml:"link"`
 	Width   int      `xml:"width,omitempty"`
 	Height  int      `xml:"height,omitempty"`
 }
 
+// RssMedia -
 type RssMedia struct {
 	XMLName xml.Name `xml:"media:content"`
 	Medium  string   `xml:"medium,attr"`
-	Url     string   `xml:"url,attr"`
+	URL     string   `xml:"url,attr"`
 	Width   int      `xml:"width,attr,omitempty"`
 	Height  int      `xml:"height,attr,omitempty"`
 }
 
+// RssTextInput -
 type RssTextInput struct {
 	XMLName     xml.Name `xml:"textInput"`
 	Title       string   `xml:"title"`
@@ -58,6 +64,7 @@ type RssTextInput struct {
 	Link        string   `xml:"link"`
 }
 
+// RssFeed -
 type RssFeed struct {
 	XMLName        xml.Name `xml:"channel"`
 	AtomLink       *RssAtomLink
@@ -74,7 +81,7 @@ type RssFeed struct {
 	Generator      string `xml:"generator,omitempty"`
 	Docs           string `xml:"docs,omitempty"`
 	Cloud          string `xml:"cloud,omitempty"`
-	Ttl            int    `xml:"ttl,omitempty"`
+	TTL            int    `xml:"ttl,omitempty"`
 	Rating         string `xml:"rating,omitempty"`
 	SkipHours      string `xml:"skipHours,omitempty"`
 	SkipDays       string `xml:"skipDays,omitempty"`
@@ -83,6 +90,7 @@ type RssFeed struct {
 	Items          []*RssItem
 }
 
+// RssItem -
 type RssItem struct {
 	XMLName     xml.Name `xml:"item"`
 	Title       string   `xml:"title"`       // required
@@ -92,19 +100,21 @@ type RssItem struct {
 	Category    string   `xml:"category,omitempty"`
 	Comments    string   `xml:"comments,omitempty"`
 	Enclosure   *RssEnclosure
-	Guid        *RssGuid // Id used
+	GUID        *RssGUID // ID used
 	PubDate     string   `xml:"pubDate,omitempty"` // created or updated
 	Source      string   `xml:"source,omitempty"`
 	Image       *RssMedia
 }
 
+// RssEnclosure -
 type RssEnclosure struct {
 	XMLName xml.Name `xml:"enclosure"`
-	Url     string   `xml:"url,attr"`
+	URL     string   `xml:"url,attr"`
 	Length  string   `xml:"length,attr"`
 	Type    string   `xml:"type,attr"`
 }
 
+// Rss -
 type Rss struct {
 	*Feed
 }
@@ -112,7 +122,7 @@ type Rss struct {
 // create a new RssImage with a generic Image struct's data
 func newRssImage(i *Image) *RssImage {
 	image := &RssImage{
-		Url:    i.Url,
+		URL:    i.URL,
 		Title:  i.Title,
 		Link:   i.Link,
 		Width:  i.Width,
@@ -125,7 +135,7 @@ func newRssImage(i *Image) *RssImage {
 func newRssMediaImage(i *Image) *RssMedia {
 	image := &RssMedia{
 		Medium: "image",
-		Url:    i.Url,
+		URL:    i.URL,
 		Width:  i.Width,
 		Height: i.Height,
 	}
@@ -138,9 +148,9 @@ func newRssItem(i *Item) *RssItem {
 		Title:       i.Title,
 		Link:        i.Link.Href,
 		Description: i.Description,
-		Guid: &RssGuid{
+		GUID: &RssGUID{
 			IsPermaLink: false,
-			Value:       i.Id,
+			Value:       i.ID,
 		},
 		PubDate: anyTimeFormat(time.RFC1123, i.Created, i.Updated),
 	}
@@ -153,7 +163,7 @@ func newRssItem(i *Item) *RssItem {
 	return item
 }
 
-// create a new RssFeed with a generic Feed struct's data
+// RssFeed - create a new RssFeed with a generic Feed struct's data
 func (r *Rss) RssFeed() *RssFeed {
 	pub := anyTimeFormat(time.RFC1123, r.Created)
 	build := anyTimeFormat(time.RFC1123, r.Updated)
@@ -167,7 +177,7 @@ func (r *Rss) RssFeed() *RssFeed {
 
 	channel := &RssFeed{
 		AtomLink: &RssAtomLink{
-			Href: r.Url,
+			Href: r.URL,
 			Rel:  "self",
 			Type: "application/rss+xml",
 		},
@@ -188,14 +198,14 @@ func (r *Rss) RssFeed() *RssFeed {
 	return channel
 }
 
-// return an XML-Ready object for an Rss object
-func (r *Rss) FeedXml() interface{} {
+// FeedXML - return an XML-Ready object for an Rss object
+func (r *Rss) FeedXML() interface{} {
 	// only generate version 2.0 feeds for now
-	return r.RssFeed().FeedXml()
+	return r.RssFeed().FeedXML()
 
 }
 
-// return an XML-ready object for an RssFeed object
-func (r *RssFeed) FeedXml() interface{} {
-	return &rssFeedXml{Version: "2.0", XmlnsMedia: "http://search.yahoo.com/mrss/", XmlnsDc: "http://purl.org/dc/elements/1.1/", XmlnsAtom: "http://www.w3.org/2005/Atom", Channel: r}
+// FeedXML - return an XML-ready object for an RssFeed object
+func (r *RssFeed) FeedXML() interface{} {
+	return &rssFeedXML{Version: "2.0", XMLnsMedia: "http://search.yahoo.com/mrss/", XMLnsDc: "http://purl.org/dc/elements/1.1/", XMLnsAtom: "http://www.w3.org/2005/Atom", Channel: r}
 }

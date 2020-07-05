@@ -1,20 +1,23 @@
+// Package database -
 package database
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
-const stmtInsertPost = "INSERT INTO posts (id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, created_at, created_by, updated_at, updated_by, published_at, published_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-const stmtInsertUser = "INSERT INTO users (id, uuid, name, slug, password, email, image, cover, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-const stmtInsertRoleUser = "INSERT INTO roles_users (id, role_id, user_id) VALUES (?, ?, ?)"
-const stmtInsertTag = "INSERT INTO tags (id, uuid, name, slug, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-const stmtInsertPostTag = "INSERT INTO posts_tags (id, post_id, tag_id) VALUES (?, ?, ?)"
-const stmtInsertSetting = "INSERT INTO settings (id, uuid, key, value, type, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+const stmtInsertPost = "INSERT INTO posts (id, uuid, title, slug, markdown, html, featured, page, status, metaDescription, image, author_id, createdAt, createdBy, updated_at, updated_by, published_at, published_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+const stmtInsertUser = "INSERT INTO users (id, uuid, name, slug, password, email, image, cover, createdAt, createdBy, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+const stmtInsertRoleUser = "INSERT INTO roles_users (id, roleID, userID) VALUES (?, ?, ?)"
+const stmtInsertTag = "INSERT INTO tags (id, uuid, name, slug, createdAt, createdBy, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+const stmtInsertPostTag = "INSERT INTO posts_tags (id, postID, tagID) VALUES (?, ?, ?)"
+const stmtInsertSetting = "INSERT INTO settings (id, uuid, key, value, type, createdAt, createdBy, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-func InsertPost(title []byte, slug string, markdown []byte, html []byte, featured bool, isPage bool, published bool, meta_description []byte, image []byte, created_at time.Time, created_by int64) (int64, error) {
+// InsertPost -
+func InsertPost(title []byte, slug string, markdown []byte, html []byte, featured bool, isPage bool, published bool, metaDescription []byte, image []byte, createdAt time.Time, createdBy int64) (int64, error) {
 
 	status := "draft"
 	if published {
@@ -22,116 +25,171 @@ func InsertPost(title []byte, slug string, markdown []byte, html []byte, feature
 	}
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return 0, fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return 0, err
 	}
 	var result sql.Result
 	if published {
-		result, err = writeDB.Exec(stmtInsertPost, nil, uuid.NewV4().String(), title, slug, markdown, html, featured, isPage, status, meta_description, image, created_by, created_at, created_by, created_at, created_by, created_at, created_by)
+		result, err = writeDB.Exec(stmtInsertPost, nil, uuid.NewV4().String(), title, slug, markdown, html, featured, isPage, status, metaDescription, image, createdBy, createdAt, createdBy, createdAt, createdBy, createdAt, createdBy)
 	} else {
-		result, err = writeDB.Exec(stmtInsertPost, nil, uuid.NewV4().String(), title, slug, markdown, html, featured, isPage, status, meta_description, image, created_by, created_at, created_by, created_at, created_by, nil, nil)
+		result, err = writeDB.Exec(stmtInsertPost, nil, uuid.NewV4().String(), title, slug, markdown, html, featured, isPage, status, metaDescription, image, createdBy, createdAt, createdBy, createdAt, createdBy, nil, nil)
 	}
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return 0, fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return 0, err
 	}
-	postId, err := result.LastInsertId()
+	postID, err := result.LastInsertId()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return 0, fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return 0, err
 	}
-	return postId, writeDB.Commit()
+	return postID, writeDB.Commit()
 }
 
-func InsertUser(name []byte, slug string, password string, email []byte, image []byte, cover []byte, created_at time.Time, created_by int64) (int64, error) {
+// InsertUser -
+func InsertUser(name []byte, slug string, password string, email []byte, image []byte, cover []byte, createdAt time.Time, createdBy int64) (int64, error) {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return 0, fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return 0, err
 	}
-	result, err := writeDB.Exec(stmtInsertUser, nil, uuid.NewV4().String(), name, slug, password, email, image, cover, created_at, created_by, created_at, created_by)
+	result, err := writeDB.Exec(stmtInsertUser, nil, uuid.NewV4().String(), name, slug, password, email, image, cover, createdAt, createdBy, createdAt, createdBy)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return 0, fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return 0, err
 	}
-	userId, err := result.LastInsertId()
+	userID, err := result.LastInsertId()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return 0, fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return 0, err
 	}
-	return userId, writeDB.Commit()
+	return userID, writeDB.Commit()
 }
 
-func InsertRoleUser(role_id int, user_id int64) error {
+// InsertRoleUser -
+func InsertRoleUser(roleID int, userID int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtInsertRoleUser, nil, role_id, user_id)
+	_, err = writeDB.Exec(stmtInsertRoleUser, nil, roleID, userID)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()
 }
 
-func InsertTag(name []byte, slug string, created_at time.Time, created_by int64) (int64, error) {
+// InsertTag -
+func InsertTag(name []byte, slug string, createdAt time.Time, createdBy int64) (int64, error) {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return 0, fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return 0, err
 	}
-	result, err := writeDB.Exec(stmtInsertTag, nil, uuid.NewV4().String(), name, slug, created_at, created_by, created_at, created_by)
+	result, err := writeDB.Exec(stmtInsertTag, nil, uuid.NewV4().String(), name, slug, createdAt, createdBy, createdAt, createdBy)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return 0, fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return 0, err
 	}
-	tagId, err := result.LastInsertId()
+	tagID, err := result.LastInsertId()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return 0, fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return 0, err
 	}
-	return tagId, writeDB.Commit()
+	return tagID, writeDB.Commit()
 }
 
-func InsertPostTag(post_id int64, tag_id int64) error {
+// InsertPostTag -
+func InsertPostTag(postID int64, tagID int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtInsertPostTag, nil, post_id, tag_id)
+	_, err = writeDB.Exec(stmtInsertPostTag, nil, postID, tagID)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()
 }
 
-func insertSettingString(key string, value string, setting_type string, created_at time.Time, created_by int64) error {
+func insertSettingString(key string, value string, settingType string, createdAt time.Time, createdBy int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtInsertSetting, nil, uuid.NewV4().String(), key, value, setting_type, created_at, created_by, created_at, created_by)
+	_, err = writeDB.Exec(stmtInsertSetting, nil, uuid.NewV4().String(), key, value, settingType, createdAt, createdBy, createdAt, createdBy)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()
 }
 
-func insertSettingInt64(key string, value int64, setting_type string, created_at time.Time, created_by int64) error {
+func insertSettingInt64(key string, value int64, settingType string, createdAt time.Time, createdBy int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtInsertSetting, nil, uuid.NewV4().String(), key, value, setting_type, created_at, created_by, created_at, created_by)
+	_, err = writeDB.Exec(stmtInsertSetting, nil, uuid.NewV4().String(), key, value, settingType, createdAt, createdBy, createdAt, createdBy)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()

@@ -1,15 +1,18 @@
+// Package migration -
 package migration
 
 import (
 	"database/sql"
 	"errors"
-	"github.com/kabukky/journey/date"
-	"github.com/kabukky/journey/filenames"
-	"github.com/kabukky/journey/helpers"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/kabukky/journey/date"
+	"github.com/kabukky/journey/filenames"
+	"github.com/kabukky/journey/helpers"
 )
 
 const stmtRetrieveGhostPosts = "SELECT id, (created_at/1000), (updated_at/1000), (published_at/1000) FROM posts"
@@ -39,7 +42,7 @@ type dateHolder struct {
 	lastLogin   *time.Time
 }
 
-// Function to convert a Ghost database to use with Journey
+// Ghost - Function to convert a Ghost database to use with Journey
 func Ghost() {
 	// Check every file in data directory
 	err := filepath.Walk(filenames.DatabaseFilepath, inspectDatabaseFile)
@@ -177,18 +180,27 @@ func convertPosts(readDB *sql.DB) error {
 	for _, row := range allRows {
 		writeDB, err := readDB.Begin()
 		if err != nil {
-			writeDB.Rollback()
+			rollBackErr := writeDB.Rollback()
+			if rollBackErr != nil {
+				return fmt.Errorf("rolling back returned error %v after receiving %w", rollBackErr, err)
+			}
 			return err
 		}
 		// Update the database with new date formats
 		_, err = writeDB.Exec(stmtUpdateGhostPost, row.createdAt, row.updatedAt, row.publishedAt, row.id)
 		if err != nil {
-			writeDB.Rollback()
+			writeErr := writeDB.Rollback()
+			if writeErr != nil {
+				return fmt.Errorf("rollback error %v whilst handling %w", writeErr, err)
+			}
 			return err
 		}
 		err = writeDB.Commit()
 		if err != nil {
-			writeDB.Rollback()
+			writeErr := writeDB.Rollback()
+			if writeErr != nil {
+				return fmt.Errorf("rollback error %v whilst handling %w", writeErr, err)
+			}
 			return err
 		}
 	}
@@ -241,18 +253,27 @@ func convertUsers(readDB *sql.DB) error {
 	for _, row := range allRows {
 		writeDB, err := readDB.Begin()
 		if err != nil {
-			writeDB.Rollback()
+			writeErr := writeDB.Rollback()
+			if writeErr != nil {
+				return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+			}
 			return err
 		}
 		// Update the database with new date formats
 		_, err = writeDB.Exec(stmtUpdateGhostUsers, row.name, row.email, row.lastLogin, row.createdAt, row.updatedAt, row.id)
 		if err != nil {
-			writeDB.Rollback()
+			writeErr := writeDB.Rollback()
+			if writeErr != nil {
+				return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+			}
 			return err
 		}
 		err = writeDB.Commit()
 		if err != nil {
-			writeDB.Rollback()
+			writeErr := writeDB.Rollback()
+			if writeErr != nil {
+				return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+			}
 			return err
 		}
 	}
@@ -291,18 +312,27 @@ func convertDates(readDB *sql.DB, stmtRetrieve string, stmtUpdate string) error 
 	for _, row := range allRows {
 		writeDB, err := readDB.Begin()
 		if err != nil {
-			writeDB.Rollback()
+			writeErr := writeDB.Rollback()
+			if writeErr != nil {
+				return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+			}
 			return err
 		}
 		// Update the database with new date formats
 		_, err = writeDB.Exec(stmtUpdate, row.createdAt, row.updatedAt, row.id)
 		if err != nil {
-			writeDB.Rollback()
+			writeErr := writeDB.Rollback()
+			if writeErr != nil {
+				return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+			}
 			return err
 		}
 		err = writeDB.Commit()
 		if err != nil {
-			writeDB.Rollback()
+			writeErr := writeDB.Rollback()
+			if writeErr != nil {
+				return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+			}
 			return err
 		}
 	}
@@ -312,14 +342,20 @@ func convertDates(readDB *sql.DB, stmtRetrieve string, stmtUpdate string) error 
 func setDefaultTheme(readDB *sql.DB) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	// Update the database with the default theme (promenade)
 	currentDate := date.GetCurrentTime()
 	_, err = writeDB.Exec(stmtUpdateGhostTheme, "promenade", currentDate, 1)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()

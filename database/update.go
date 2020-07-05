@@ -1,18 +1,21 @@
+// Package database -
 package database
 
 import (
+	"fmt"
 	"time"
 )
 
-const stmtUpdatePost = "UPDATE posts SET title = ?, slug = ?, markdown = ?, html = ?, featured = ?, page = ?, status = ?, meta_description = ?, image = ?, updated_at = ?, updated_by = ? WHERE id = ?"
-const stmtUpdatePostPublished = "UPDATE posts SET title = ?, slug = ?, markdown = ?, html = ?, featured = ?, page = ?, status = ?, meta_description = ?, image = ?, updated_at = ?, updated_by = ?, published_at = ?, published_by = ? WHERE id = ?"
-const stmtUpdateSettings = "UPDATE settings SET value = ?, updated_at = ?, updated_by = ? WHERE key = ?"
-const stmtUpdateUser = "UPDATE users SET name = ?, slug = ?, email = ?, image = ?, cover = ?, bio = ?, website = ?, location = ?, updated_at = ?, updated_by = ? WHERE id = ?"
+const stmtUpdatePost = "UPDATE posts SET title = ?, slug = ?, markdown = ?, html = ?, featured = ?, page = ?, status = ?, metaDescription = ?, image = ?, updatedAt = ?, updatedBy = ? WHERE id = ?"
+const stmtUpdatePostPublished = "UPDATE posts SET title = ?, slug = ?, markdown = ?, html = ?, featured = ?, page = ?, status = ?, metaDescription = ?, image = ?, updatedAt = ?, updatedBy = ?, published_at = ?, published_by = ? WHERE id = ?"
+const stmtUpdateSettings = "UPDATE settings SET value = ?, updatedAt = ?, updatedBy = ? WHERE key = ?"
+const stmtUpdateUser = "UPDATE users SET name = ?, slug = ?, email = ?, image = ?, cover = ?, bio = ?, website = ?, location = ?, updatedAt = ?, updatedBy = ? WHERE id = ?"
 const stmtUpdateLastLogin = "UPDATE users SET last_login = ? WHERE id = ?"
-const stmtUpdateUserPassword = "UPDATE users SET password = ?, updated_at = ?, updated_by = ? WHERE id = ?"
+const stmtUpdateUserPassword = "UPDATE users SET password = ?, updatedAt = ?, updatedBy = ? WHERE id = ?"
 
-func UpdatePost(id int64, title []byte, slug string, markdown []byte, html []byte, featured bool, isPage bool, published bool, meta_description []byte, image []byte, updated_at time.Time, updated_by int64) error {
-	currentPost, err := RetrievePostById(id)
+// UpdatePost -
+func UpdatePost(id int64, title []byte, slug string, markdown []byte, html []byte, featured bool, isPage bool, published bool, metaDescription []byte, image []byte, updatedAt time.Time, updatedBy int64) error {
+	currentPost, err := RetrievePostByID(id)
 	if err != nil {
 		return err
 	}
@@ -22,124 +25,183 @@ func UpdatePost(id int64, title []byte, slug string, markdown []byte, html []byt
 	}
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	// If the updated post is published for the first time, add publication date and user
 	if published && !currentPost.IsPublished {
-		_, err = writeDB.Exec(stmtUpdatePostPublished, title, slug, markdown, html, featured, isPage, status, meta_description, image, updated_at, updated_by, updated_at, updated_by, id)
+		_, err = writeDB.Exec(stmtUpdatePostPublished, title, slug, markdown, html, featured, isPage, status, metaDescription, image, updatedAt, updatedBy, updatedAt, updatedBy, id)
 	} else {
-		_, err = writeDB.Exec(stmtUpdatePost, title, slug, markdown, html, featured, isPage, status, meta_description, image, updated_at, updated_by, id)
+		_, err = writeDB.Exec(stmtUpdatePost, title, slug, markdown, html, featured, isPage, status, metaDescription, image, updatedAt, updatedBy, id)
 	}
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()
 }
 
-func UpdateSettings(title []byte, description []byte, logo []byte, cover []byte, postsPerPage int64, activeTheme string, navigation []byte, updated_at time.Time, updated_by int64) error {
+// UpdateSettings -
+func UpdateSettings(title []byte, description []byte, logo []byte, cover []byte, postsPerPage int64, activeTheme string, navigation []byte, updatedAt time.Time, updatedBy int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	// Title
-	_, err = writeDB.Exec(stmtUpdateSettings, title, updated_at, updated_by, "title")
+	_, err = writeDB.Exec(stmtUpdateSettings, title, updatedAt, updatedBy, "title")
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	// Description
-	_, err = writeDB.Exec(stmtUpdateSettings, description, updated_at, updated_by, "description")
+	_, err = writeDB.Exec(stmtUpdateSettings, description, updatedAt, updatedBy, "description")
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	// Logo
-	_, err = writeDB.Exec(stmtUpdateSettings, logo, updated_at, updated_by, "logo")
+	_, err = writeDB.Exec(stmtUpdateSettings, logo, updatedAt, updatedBy, "logo")
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	// Cover
-	_, err = writeDB.Exec(stmtUpdateSettings, cover, updated_at, updated_by, "cover")
+	_, err = writeDB.Exec(stmtUpdateSettings, cover, updatedAt, updatedBy, "cover")
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	// PostsPerPage
-	_, err = writeDB.Exec(stmtUpdateSettings, postsPerPage, updated_at, updated_by, "postsPerPage")
+	_, err = writeDB.Exec(stmtUpdateSettings, postsPerPage, updatedAt, updatedBy, "postsPerPage")
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	// ActiveTheme
-	_, err = writeDB.Exec(stmtUpdateSettings, activeTheme, updated_at, updated_by, "activeTheme")
+	_, err = writeDB.Exec(stmtUpdateSettings, activeTheme, updatedAt, updatedBy, "activeTheme")
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	// Navigation
-	_, err = writeDB.Exec(stmtUpdateSettings, navigation, updated_at, updated_by, "navigation")
+	_, err = writeDB.Exec(stmtUpdateSettings, navigation, updatedAt, updatedBy, "navigation")
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()
 }
 
-func UpdateActiveTheme(activeTheme string, updated_at time.Time, updated_by int64) error {
+// UpdateActiveTheme -
+func UpdateActiveTheme(activeTheme string, updatedAt time.Time, updatedBy int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtUpdateSettings, activeTheme, updated_at, updated_by, "activeTheme")
+	_, err = writeDB.Exec(stmtUpdateSettings, activeTheme, updatedAt, updatedBy, "activeTheme")
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()
 }
 
-func UpdateUser(id int64, name []byte, slug string, email []byte, image []byte, cover []byte, bio []byte, website []byte, location []byte, updated_at time.Time, updated_by int64) error {
+// UpdateUser -
+func UpdateUser(id int64, name []byte, slug string, email []byte, image []byte, cover []byte, bio []byte, website []byte, location []byte, updatedAt time.Time, updatedBy int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtUpdateUser, name, slug, email, image, cover, bio, website, location, updated_at, updated_by, id)
+	_, err = writeDB.Exec(stmtUpdateUser, name, slug, email, image, cover, bio, website, location, updatedAt, updatedBy, id)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()
 }
 
-func UpdateLastLogin(logInDate time.Time, userId int64) error {
+// UpdateLastLogin -
+func UpdateLastLogin(logInDate time.Time, userID int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtUpdateLastLogin, logInDate, userId)
+	_, err = writeDB.Exec(stmtUpdateLastLogin, logInDate, userID)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()
 }
 
-func UpdateUserPassword(id int64, password string, updated_at time.Time, updated_by int64) error {
+// UpdateUserPassword -
+func UpdateUserPassword(id int64, password string, updatedAt time.Time, updatedBy int64) error {
 	writeDB, err := readDB.Begin()
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
-	_, err = writeDB.Exec(stmtUpdateUserPassword, password, updated_at, updated_by, id)
+	_, err = writeDB.Exec(stmtUpdateUserPassword, password, updatedAt, updatedBy, id)
 	if err != nil {
-		writeDB.Rollback()
+		writeErr := writeDB.Rollback()
+		if writeErr != nil {
+			return fmt.Errorf("rollback generated error %v whilst handling %w", writeErr, err)
+		}
 		return err
 	}
 	return writeDB.Commit()

@@ -1,3 +1,4 @@
+// Package feeds -
 package feeds
 
 import (
@@ -7,30 +8,35 @@ import (
 	"time"
 )
 
+// Image -
 type Image struct {
-	Url, Title, Link string
+	URL, Title, Link string
 	Width, Height    int
 }
 
+// Link -
 type Link struct {
 	Href, Rel string
 }
 
+// Author -
 type Author struct {
 	Name, Email string
 }
 
+// Item -
 type Item struct {
 	Title       string
 	Link        *Link
 	Author      *Author
 	Description string // used as description in rss, summary in atom
-	Id          string // used as guid in rss, id in atom
+	ID          string // used as guid in rss, id in atom
 	Updated     time.Time
 	Created     time.Time
 	Image       *Image
 }
 
+// Feed -
 type Feed struct {
 	Title       string
 	Link        *Link
@@ -38,15 +44,15 @@ type Feed struct {
 	Author      *Author
 	Updated     time.Time
 	Created     time.Time
-	Id          string
+	ID          string
 	Subtitle    string
 	Items       []*Item
 	Copyright   string
 	Image       *Image
-	Url         string
+	URL         string
 }
 
-// add a new Item to a Feed
+// Add a new Item to a Feed
 func (f *Feed) Add(item *Item) {
 	f.Items = append(f.Items, item)
 }
@@ -63,15 +69,15 @@ func anyTimeFormat(format string, times ...time.Time) string {
 	return ""
 }
 
-// interface used by ToXML to get a object suitable for exporting XML.
-type XmlFeed interface {
-	FeedXml() interface{}
+// XMLFeed - interface used by ToXML to get a object suitable for exporting XML.
+type XMLFeed interface {
+	FeedXML() interface{}
 }
 
-// turn a feed object (either a Feed, AtomFeed, or RssFeed) into xml
+// ToXML - turn a feed object (either a Feed, AtomFeed, or RssFeed) into xml
 // returns an error if xml marshaling fails
-func ToXML(feed XmlFeed) (string, error) {
-	x := feed.FeedXml()
+func ToXML(feed XMLFeed) (string, error) {
+	x := feed.FeedXML()
 	data, err := xml.MarshalIndent(x, "", "  ")
 	if err != nil {
 		return "", err
@@ -83,8 +89,8 @@ func ToXML(feed XmlFeed) (string, error) {
 
 // Write a feed object (either a Feed, AtomFeed, or RssFeed) as XML into
 // the writer. Returns an error if XML marshaling fails.
-func WriteXML(feed XmlFeed, w io.Writer) error {
-	x := feed.FeedXml()
+func WriteXML(feed XMLFeed, w io.Writer) error {
+	x := feed.FeedXML()
 	// write default xml header, without the newline
 	if _, err := w.Write([]byte(xml.Header)); err != nil {
 		return err

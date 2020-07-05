@@ -1,3 +1,4 @@
+// Package templates -
 package templates
 
 import (
@@ -29,9 +30,9 @@ var quoteTagChecker = regexp.MustCompile("(.*?)[\"'](.+?)[\"']$")
 func getFunction(name string) func(*structure.Helper, *structure.RequestData) []byte {
 	if helperFuctions[name] != nil {
 		return helperFuctions[name]
-	} else {
-		return helperFuctions["null"]
 	}
+
+	return helperFuctions["null"]
 }
 
 func createHelper(helperName []byte, unescaped bool, startPos int, block []byte, children []structure.Helper, elseHelper *structure.Helper) *structure.Helper {
@@ -95,7 +96,6 @@ func findHelper(data []byte, allHelpers []structure.Helper) ([]byte, []structure
 		// Check if helper calls for unescaped text (e.g. three brackets - {{{title}}})
 		if bytes.HasPrefix(helperName, []byte("{")) {
 			unescaped = true
-			openTagLength++ //not necessary
 			closeTagLength++
 			helperName = helperName[len([]byte("{")):]
 		}
@@ -117,15 +117,14 @@ func findHelper(data []byte, allHelpers []structure.Helper) ([]byte, []structure
 		}
 		allHelpers = append(allHelpers, *createHelper(helperName, unescaped, startPos, []byte{}, nil, nil))
 		return findHelper(data, allHelpers)
-	} else {
-		return data, allHelpers
 	}
+
+	return data, allHelpers
 }
 
 func findBlock(data []byte, helperName []byte, unescaped bool, startPos int) ([]byte, structure.Helper) {
 	arguments := bytes.Fields(helperName)
 	tag := arguments[0] // Get only the first tag (e.g. 'if' in 'if @blog.cover')
-	arguments = arguments[1:]
 	closeParts := []string{"{{2,3}\\s*/", string(tag), ".?}{2,3}"}
 	openParts := []string{"{{2,3}\\s*#", string(tag), ".+?}{2,3}"}
 	closeRegex := regexp.MustCompile(strings.Join(closeParts, ""))
@@ -154,7 +153,7 @@ func findBlock(data []byte, helperName []byte, unescaped bool, startPos int) ([]
 			// Change children, omit else helper
 			elseHelper.Children = children[(index + 1):]
 			// Change Position in children of else helper
-			for indexElse, _ := range elseHelper.Children {
+			for indexElse := range elseHelper.Children {
 				elseHelper.Children[indexElse].Position = elseHelper.Children[indexElse].Position - elseHelper.Position
 			}
 			children = children[:index]
@@ -227,10 +226,10 @@ func compileTheme(themePath string) error {
 	}
 	// Check if index and post templates are compiled
 	if _, ok := compiledTemplates.m["index"]; !ok {
-		return errors.New("Couldn't compile template 'index'. Is index.hbs missing?")
+		return errors.New("couldn't compile template 'index'. Is index.hbs missing")
 	}
 	if _, ok := compiledTemplates.m["post"]; !ok {
-		return errors.New("Couldn't compile template 'post'. Is post.hbs missing?")
+		return errors.New("couldn't compile template 'post'. Is post.hbs missing")
 	}
 	// Check if pagination and navigation templates have been provided by the theme.
 	// If not, use the build in ones.
@@ -260,9 +259,9 @@ func checkThemes() error {
 	err = compileTheme(currentThemePath)
 	if err == nil {
 		return nil
-	} else {
-		log.Println("Warning: Couldn't compile theme in " + currentThemePath + ": " + err.Error())
 	}
+
+	log.Println("Warning: Couldn't compile theme in " + currentThemePath + ": " + err.Error())
 	// If the currently set theme couldnt be compiled, try the default theme (promenade)
 	err = compileTheme(filepath.Join(filenames.ThemesFilepath, "promenade"))
 	if err == nil {
@@ -272,9 +271,9 @@ func checkThemes() error {
 			return err
 		}
 		return nil
-	} else {
-		log.Println("Warning: Couldn't compile theme in " + currentThemePath + ": " + err.Error())
 	}
+
+	log.Println("Warning: Couldn't compile theme in " + currentThemePath + ": " + err.Error())
 	// If all of that didn't work, try the available themes in order
 	allThemes := GetAllThemes()
 	for _, theme := range allThemes {
@@ -286,13 +285,14 @@ func checkThemes() error {
 				return err
 			}
 			return nil
-		} else {
-			log.Println("Warning: Couldn't compile theme in " + currentThemePath + ": " + err.Error())
 		}
+
+		log.Println("Warning: Couldn't compile theme in " + currentThemePath + ": " + err.Error())
 	}
 	return errors.New("Couldn't find a theme to use in " + filenames.ThemesFilepath)
 }
 
+// Generate -
 func Generate() error {
 	compiledTemplates.Lock()
 	defer compiledTemplates.Unlock()

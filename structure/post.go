@@ -1,22 +1,24 @@
+// Package structure -
 package structure
 
 import (
 	"time"
 )
 
+// Post -
 type Post struct {
-	Id          int64
-	Uuid        []byte
-	Title       []byte
-	Slug        string
-	Markdown    []byte
-	Html        []byte
-	IsFeatured  bool
-	IsPage      bool
-	IsPublished bool
-	Date        *time.Time
-	Tags        []Tag
-	Author      *User
+	ID              int64
+	UUID            []byte
+	Title           []byte
+	Slug            string
+	Markdown        []byte
+	HTML            []byte
+	IsFeatured      bool
+	IsPage          bool
+	IsPublished     bool
+	Date            *time.Time
+	Tags            []Tag
+	Author          *User
 	MetaDescription []byte
-	Image       []byte
+	Image           []byte
 }
